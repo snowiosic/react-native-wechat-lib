@@ -199,6 +199,7 @@ public class WeChatModule extends ReactContextBaseJavaModule implements IWXAPIEv
 
     /**
      * 分享文本
+     *
      * @param data
      * @param callback
      */
@@ -222,6 +223,7 @@ public class WeChatModule extends ReactContextBaseJavaModule implements IWXAPIEv
 
     /**
      * 分享图片
+     *
      * @param data
      * @param callback
      */
@@ -255,8 +257,10 @@ public class WeChatModule extends ReactContextBaseJavaModule implements IWXAPIEv
 
     }
     // private static final String SDCARD_ROOT = Environment.getExternalStorageDirectory().getAbsolutePath();
+
     /**
      * 分享本地图片
+     *
      * @param data
      * @param callback
      */
@@ -270,7 +274,7 @@ public class WeChatModule extends ReactContextBaseJavaModule implements IWXAPIEv
             }
 //            int maxWidth = data.hasKey("maxWidth") ? data.getInt("maxWidth") : -1;
             fs = new FileInputStream(path);
-            Bitmap bmp  = BitmapFactory.decodeStream(fs);
+            Bitmap bmp = BitmapFactory.decodeStream(fs);
 
 //            if (maxWidth > 0) {
 //                bmp = Bitmap.createScaledBitmap(bmp, maxWidth, bmp.getHeight() / bmp.getWidth() * maxWidth, true);
@@ -317,7 +321,91 @@ public class WeChatModule extends ReactContextBaseJavaModule implements IWXAPIEv
     }
 
     /**
+     * 分享文件
+     *
+     * @param data
+     * @param callback
+     */
+    @ReactMethod
+    public void shareFile(final ReadableMap data, final Callback callback) {
+        WXFileObject file = new WXFileObject();
+        file.filePath = data.hasKey("filePath") ? data.getString("filePath") : null;
+
+        final WXMediaMessage msg = new WXMediaMessage();
+        msg.mediaObject = file;
+        msg.title = data.hasKey("title") ? data.getString("title") : null;
+        msg.description = data.hasKey("description") ? data.getString("description") : null;
+
+        if (data.hasKey("thumbImageUrl")) {
+            this._getImage(Uri.parse(data.getString("thumbImageUrl")), null, new ImageCallback() {
+                @Override
+                public void invoke(@Nullable Bitmap bmp) {
+                    // 设置缩略图
+                    if (bmp != null) {
+                        msg.thumbData = bitmapResizeGetBytes(bmp, THUMB_SIZE);
+                    }
+                    // 构造一个Req
+                    SendMessageToWX.Req req = new SendMessageToWX.Req();
+                    req.transaction = "file";
+                    req.message = msg;
+                    req.scene = data.hasKey("scene") ? data.getInt("scene") : SendMessageToWX.Req.WXSceneSession;
+                    callback.invoke(null, api.sendReq(req));
+                }
+            });
+        } else {
+            // 构造一个Req
+            SendMessageToWX.Req req = new SendMessageToWX.Req();
+            req.transaction = "file";
+            req.message = msg;
+            req.scene = data.hasKey("scene") ? data.getInt("scene") : SendMessageToWX.Req.WXSceneSession;
+            callback.invoke(null, api.sendReq(req));
+        }
+    }
+
+
+    /**
+     * 分享base64图片数据
+     *
+     * @param data
+     * @param callback
+     */
+    @ReactMethod
+    public void shareBase64Image(final ReadableMap data, final Callback callback) {
+        String imageUrl = data.getString("imageUrl");
+        if (!imageUrl.toLowerCase().startsWith("file://")) {
+            imageUrl = "file://" + imageUrl;
+        }
+
+        this._getImage(Uri.parse(imageUrl), null, new ImageCallback() {
+            @Override
+            public void invoke(@Nullable Bitmap bitmap) {
+                Bitmap bmp = bitmap;
+                int maxWidth = data.hasKey("maxWidth") ? data.getInt("maxWidth") : -1;
+                if (maxWidth > 0) {
+                    bmp = Bitmap.createScaledBitmap(bmp, maxWidth, bmp.getHeight() / bmp.getWidth() * maxWidth, true);
+                }
+                // 初始化 WXImageObject 和 WXMediaMessage 对象
+                WXImageObject imgObj = new WXImageObject(bmp);
+                WXMediaMessage msg = new WXMediaMessage();
+                msg.mediaObject = imgObj;
+
+                // 设置缩略图
+                msg.thumbData = bitmapResizeGetBytes(bmp, THUMB_SIZE);
+
+                // 构造一个Req
+                SendMessageToWX.Req req = new SendMessageToWX.Req();
+                req.transaction = "imgFile";
+                req.message = msg;
+                // req.userOpenId = getOpenId();
+                req.scene = data.hasKey("scene") ? data.getInt("scene") : SendMessageToWX.Req.WXSceneSession;
+                callback.invoke(null, api.sendReq(req));
+            }
+        });
+    }
+
+    /**
      * 分享音乐
+     *
      * @param data
      * @param callback
      */
@@ -365,6 +453,7 @@ public class WeChatModule extends ReactContextBaseJavaModule implements IWXAPIEv
 
     /**
      * 分享视频
+     *
      * @param data
      * @param callback
      */
@@ -407,6 +496,7 @@ public class WeChatModule extends ReactContextBaseJavaModule implements IWXAPIEv
 
     /**
      * 分享网页
+     *
      * @param data
      * @param callback
      */
@@ -449,6 +539,7 @@ public class WeChatModule extends ReactContextBaseJavaModule implements IWXAPIEv
 
     /**
      * 分享小程序
+     *
      * @param data
      * @param callback
      */
@@ -525,6 +616,7 @@ public class WeChatModule extends ReactContextBaseJavaModule implements IWXAPIEv
 
     /**
      * 一次性订阅消息
+     *
      * @param data
      * @param callback
      */
