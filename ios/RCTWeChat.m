@@ -101,7 +101,7 @@ RCT_EXPORT_MODULE()
     if (data.length > maxLength) {
         return [self compressImage:resultImage toByte:maxLength];
     }
-    
+
     return data;
 }
 
@@ -255,7 +255,7 @@ RCT_EXPORT_METHOD(shareImage:(NSDictionary *)data
         callback([NSArray arrayWithObject:@"shareImage: ImageUrl value, Could not find file suffix."]);
         return;
     }
-    
+
     // 根据路径下载图片
     UIImage *image = [self getImageFromURL:imageUrl];
     // 从 UIImage 获取图片数据
@@ -263,7 +263,7 @@ RCT_EXPORT_METHOD(shareImage:(NSDictionary *)data
     // 用图片数据构建 WXImageObject 对象
     WXImageObject *imageObject = [WXImageObject object];
     imageObject.imageData = imageData;
-    
+
     WXMediaMessage *message = [WXMediaMessage message];
     // 利用原图压缩出缩略图，确保缩略图大小不大于32KB
     message.thumbData = [self compressImage: image toByte:32678];
@@ -285,6 +285,80 @@ RCT_EXPORT_METHOD(shareImage:(NSDictionary *)data
     [WXApi sendReq:req completion:completion];
 }
 
+
+// 分享文件
+RCT_EXPORT_METHOD(shareFile:(NSDictionary *)data
+                  callback:(RCTResponseSenderBlock)callback)
+{
+    WXFileObject *fileObject = [WXFileObject object];
+    fileObject.fileData = [NSData dataWithContentsOfFile:data[@"filePath"]];
+    fileObject.fileExtension = data[@"fileExtension"];
+
+    WXMediaMessage *message = [WXMediaMessage message];
+    message.title = data[@"title"];
+    message.description = data[@"description"];
+    message.mediaObject = fileObject;
+    NSString *thumbImageUrl = data[@"thumbImageUrl"];
+    if (thumbImageUrl != NULL && ![thumbImageUrl isEqual:@""]) {
+        // 根据路径下载图片
+        UIImage *image = [self getImageFromURL:thumbImageUrl];
+        message.thumbData = [self compressImage: image toByte:32678];
+    }
+
+    SendMessageToWXReq* req = [SendMessageToWXReq new];
+    req.bText = NO;
+    req.message = message;
+    req.scene = [data[@"scene"] integerValue];
+    void ( ^ completion )( BOOL );
+    completion = ^( BOOL success )
+    {
+        callback(@[success ? [NSNull null] : INVOKE_FAILED]);
+        return;
+    };
+    [WXApi sendReq:req completion:completion];
+}
+
+// 分享base64图片数据
+RCT_EXPORT_METHOD(shareBase64Image:(NSDictionary *)data
+                  callback:(RCTResponseSenderBlock)callback)
+{
+    NSURL *url = [NSURL URLWithString:data[@"imageUrl"]];
+    NSURLRequest *imageRequest = [NSURLRequest requestWithURL:url];
+    [self.bridge.imageLoader loadImageWithURLRequest:imageRequest callback:^(NSError *error, UIImage *image) {
+        if (image == nil){
+        callback(@[@"fail to load image resource"]);
+        } else {
+        WXImageObject *imageObject = [WXImageObject object];
+        imageObject.imageData = UIImagePNGRepresentation(image);
+
+        WXMediaMessage *message = [WXMediaMessage message];
+        message.mediaObject = imageObject;
+        message.title = data[@"title"];
+        message.description = data[@"description"];
+
+        NSString *thumbImageUrl = data[@"thumbImageUrl"];
+        if (thumbImageUrl != NULL && ![thumbImageUrl isEqual:@""]) {
+            // 根据路径下载图片
+            UIImage *image = [self getImageFromURL:thumbImageUrl];
+            message.thumbData = [self compressImage: image toByte:32678];
+        }
+
+        SendMessageToWXReq* req = [SendMessageToWXReq new];
+        req.bText = NO;
+        req.message = message;
+        req.scene = [data[@"scene"] integerValue];
+        void ( ^ completion )( BOOL );
+        completion = ^( BOOL success )
+        {
+            callback(@[success ? [NSNull null] : INVOKE_FAILED]);
+            return;
+        };
+        [WXApi sendReq:req completion:completion];
+        }
+    }];
+}
+
+
 // 分享本地图片
 RCT_EXPORT_METHOD(shareLocalImage:(NSDictionary *)data
                   :(RCTResponseSenderBlock)callback)
@@ -300,7 +374,7 @@ RCT_EXPORT_METHOD(shareLocalImage:(NSDictionary *)data
         callback([NSArray arrayWithObject:@"shareLocalImage: ImageUrl value, Could not find file suffix."]);
         return;
     }
-    
+
     // 根据路径下载图片
     UIImage *image = [UIImage imageWithContentsOfFile:imageUrl];
     // 从 UIImage 获取图片数据
@@ -308,7 +382,7 @@ RCT_EXPORT_METHOD(shareLocalImage:(NSDictionary *)data
     // 用图片数据构建 WXImageObject 对象
     WXImageObject *imageObject = [WXImageObject object];
     imageObject.imageData = imageData;
-    
+
     WXMediaMessage *message = [WXMediaMessage message];
     // 利用原图压缩出缩略图，确保缩略图大小不大于32KB
     message.thumbData = [self compressImage: image toByte:32678];
@@ -540,7 +614,7 @@ RCT_EXPORT_METHOD(pay:(NSDictionary *)data
     if([resp isKindOfClass:[SendMessageToWXResp class]])
     {
         SendMessageToWXResp *r = (SendMessageToWXResp *)resp;
-    
+
         NSMutableDictionary *body = @{@"errCode":@(r.errCode)}.mutableCopy;
         body[@"errStr"] = r.errStr;
         body[@"lang"] = r.lang;
@@ -555,7 +629,7 @@ RCT_EXPORT_METHOD(pay:(NSDictionary *)data
         body[@"lang"] = r.lang;
         body[@"country"] =r.country;
         body[@"type"] = @"SendAuth.Resp";
-    
+
         if (resp.errCode == WXSuccess) {
             if (self.appId && r) {
             // ios第一次获取不到appid会卡死，加个判断OK

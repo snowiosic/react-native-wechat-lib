@@ -151,6 +151,8 @@ const nativeShareToFavorite = wrapApi(WeChat.shareToFavorite);
 const nativeSendAuthRequest = wrapApi(WeChat.sendAuthRequest);
 const nativeShareText = wrapApi(WeChat.shareText);
 const nativeShareImage = wrapApi(WeChat.shareImage);
+const nativeShareFile = wrapApi(WeChat.shareFile);
+const nativeShareBase64Image = wrapApi(WeChat.shareBase64Image);
 const nativeShareLocalImage = wrapApi(WeChat.shareLocalImage);
 const nativeShareMusic = wrapApi(WeChat.shareMusic);
 const nativeShareVideo = wrapApi(WeChat.shareVideo);
@@ -231,6 +233,48 @@ export function shareLocalImage(data) {
   }
   return new Promise((resolve, reject) => {
     nativeShareLocalImage(data);
+    emitter.once('SendMessageToWX.Resp', resp => {
+      if (resp.errCode === 0) {
+        resolve(resp);
+      } else {
+        reject(new WechatError(resp));
+      }
+    });
+  });
+}
+
+/**
+ * Share file
+ * @method shareFile
+ * @param {Object} data
+ */
+export function shareFile(data) {
+  if (data && data.scene == null) {
+    data.scene = 0
+  }
+  return new Promise((resolve, reject) => {
+    nativeShareFile(data);
+    emitter.once('SendMessageToWX.Resp', resp => {
+      if (resp.errCode === 0) {
+        resolve(resp);
+      } else {
+        reject(new WechatError(resp));
+      }
+    });
+  });
+}
+
+/**
+ * Share base64 image data
+ * @method shareBase64Image
+ * @param {Object} data
+ */
+export function shareBase64Image(data) {
+  if (data && data.scene == null) {
+    data.scene = 0
+  }
+  return new Promise((resolve, reject) => {
+    nativeShareBase64Image(data);
     emitter.once('SendMessageToWX.Resp', resp => {
       if (resp.errCode === 0) {
         resolve(resp);
@@ -421,7 +465,7 @@ export function pay(data) {
   correct('noncestr', 'nonceStr');
   correct('partnerid', 'partnerId');
   correct('timestamp', 'timeStamp');
-  
+
   // FIXME(94cstyles)
   // Android requires the type of the timeStamp field to be a string
   if (Platform.OS === 'android') data.timeStamp = String(data.timeStamp)
