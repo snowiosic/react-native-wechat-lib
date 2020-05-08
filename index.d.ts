@@ -70,21 +70,6 @@ declare module "react-native-wechat-lib" {
     imageUrl: string,
     scene?: WXScene
   }
-  export interface ShareFileMetadata {
-    filePath: string;
-    fileExtension?: string;
-    title?: string,
-    description?: string,
-    thumbImageUrl?: string,
-    scene?: WXScene
-  }
-  export interface shareBase64ImageMetadata {
-    imageUrl: string,
-    title?: string,
-    description?: string,
-    thumbImageUrl?: string,
-    scene?: WXScene
-  }
   export interface ShareMusicMetadata {
     musicUrl: string,
     musicLowBandUrl?: string,
@@ -143,11 +128,11 @@ declare module "react-native-wechat-lib" {
   export function shareLocalImage(
     message: ShareImageMetadata
   ): Promise<{ errCode?: number; errStr?: string }>;
-  export function shareFile(
-      message: ShareFileMetadata
+  export function shareToTimeline(
+      message: ShareMetadata
   ): Promise<{ errCode?: number; errStr?: string }>;
-  export function shareBase64Image(
-      message: shareBase64ImageMetadata
+  export function shareToSession(
+      message: ShareMetadata
   ): Promise<{ errCode?: number; errStr?: string }>;
   export function shareMusic(
     message: ShareMusicMetadata

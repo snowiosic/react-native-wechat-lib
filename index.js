@@ -151,8 +151,6 @@ const nativeShareToFavorite = wrapApi(WeChat.shareToFavorite);
 const nativeSendAuthRequest = wrapApi(WeChat.sendAuthRequest);
 const nativeShareText = wrapApi(WeChat.shareText);
 const nativeShareImage = wrapApi(WeChat.shareImage);
-const nativeShareFile = wrapApi(WeChat.shareFile);
-const nativeShareBase64Image = wrapApi(WeChat.shareBase64Image);
 const nativeShareLocalImage = wrapApi(WeChat.shareLocalImage);
 const nativeShareMusic = wrapApi(WeChat.shareMusic);
 const nativeShareVideo = wrapApi(WeChat.shareVideo);
@@ -244,16 +242,21 @@ export function shareLocalImage(data) {
 }
 
 /**
- * Share file
- * @method shareFile
+ * Share something to timeline/moments/朋友圈
+ * @method shareToTimeline
  * @param {Object} data
+ * @param {String} data.thumbImage - Thumb image of the message, which can be a uri or a resource id.
+ * @param {String} data.type - Type of this message. Could be {news|text|imageUrl|imageFile|imageResource|video|audio|file}
+ * @param {String} data.webpageUrl - Required if type equals news. The webpage link to share.
+ * @param {String} data.imageUrl - Provide a remote image if type equals image.
+ * @param {String} data.videoUrl - Provide a remote video if type equals video.
+ * @param {String} data.musicUrl - Provide a remote music if type equals audio.
+ * @param {String} data.filePath - Provide a local file if type equals file.
+ * @param {String} data.fileExtension - Provide the file type if type equals file.
  */
-export function shareFile(data) {
-  if (data && data.scene == null) {
-    data.scene = 0
-  }
+export function shareToTimeline(data) {
   return new Promise((resolve, reject) => {
-    nativeShareFile(data);
+    nativeShareToTimeline(data);
     emitter.once('SendMessageToWX.Resp', resp => {
       if (resp.errCode === 0) {
         resolve(resp);
@@ -265,16 +268,21 @@ export function shareFile(data) {
 }
 
 /**
- * Share base64 image data
- * @method shareBase64Image
+ * Share something to a friend or group
+ * @method shareToSession
  * @param {Object} data
+ * @param {String} data.thumbImage - Thumb image of the message, which can be a uri or a resource id.
+ * @param {String} data.type - Type of this message. Could be {news|text|imageUrl|imageFile|imageResource|video|audio|file}
+ * @param {String} data.webpageUrl - Required if type equals news. The webpage link to share.
+ * @param {String} data.imageUrl - Provide a remote image if type equals image.
+ * @param {String} data.videoUrl - Provide a remote video if type equals video.
+ * @param {String} data.musicUrl - Provide a remote music if type equals audio.
+ * @param {String} data.filePath - Provide a local file if type equals file.
+ * @param {String} data.fileExtension - Provide the file type if type equals file.
  */
-export function shareBase64Image(data) {
-  if (data && data.scene == null) {
-    data.scene = 0
-  }
+export function shareToSession(data) {
   return new Promise((resolve, reject) => {
-    nativeShareBase64Image(data);
+    nativeShareToSession(data);
     emitter.once('SendMessageToWX.Resp', resp => {
       if (resp.errCode === 0) {
         resolve(resp);
